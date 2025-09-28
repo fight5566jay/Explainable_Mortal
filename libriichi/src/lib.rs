@@ -56,7 +56,6 @@
     clippy::needless_bitwise_bool,
     clippy::needless_collect,
     clippy::needless_continue,
-    clippy::needless_for_each,
     clippy::nonstandard_macro_braces,
     clippy::or_fun_call,
     clippy::path_buf_push_overwrite,
