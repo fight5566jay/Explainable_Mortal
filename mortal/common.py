@@ -60,11 +60,11 @@ def send_msg(conn: socket.socket, msg, packed=False):
     conn.sendall(struct.pack('<Q', len(tx)))
     conn.sendall(tx)
 
-def recv_msg(conn: socket.socket, map_location=torch.device('cpu')):
+def recv_msg(conn: socket.socket, map_location='cpu'):
     rx = recv_binary(conn, 8)
     (size,) = struct.unpack('<Q', rx)
     rx = recv_binary(conn, size)
-    return torch.load(BytesIO(rx), weights_only=False, map_location=map_location) # TODO: weights_only=True
+    return torch.load(BytesIO(rx), weights_only=True, map_location=map_location)
 
 def recv_binary(conn: socket.socket, size):
     assert size > 0
