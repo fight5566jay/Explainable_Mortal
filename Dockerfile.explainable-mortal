@@ -1,0 +1,46 @@
+# Use a smaller base image with PyTorch already installed
+FROM pytorch/pytorch:latest as runtime
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Copy project files
+WORKDIR /mortal
+COPY Cargo.toml Cargo.lock ./
+COPY libriichi libriichi
+COPY exe-wrapper exe-wrapper
+
+# Build libriichi
+RUN cargo build -p libriichi --lib --release
+
+# Copy Python application
+COPY mortal .
+#COPY docs ./docs
+
+# The libriichi.so should already be built in the current container
+RUN cp target/release/libriichi.so .
+
+# Install Python dependencies that aren't included in pytorch image
+RUN pip install toml tqdm tensorboard
+
+# Create config file
+ENV MORTAL_CFG config.toml
+ENV LD_LIBRARY_PATH=/opt/conda/lib:$LD_LIBRARY_PATH
+#RUN echo "[control]" > config.toml && \
+#    echo "state_file = '/workspace/built/models/mortal.pth'" >> config.toml && \
+#    echo "" >> config.toml && \
+#    echo "[resnet]" >> config.toml && \
+#    echo "conv_channels = 192" >> config.toml && \
+#    echo "num_blocks = 40" >> config.toml && \
+#    echo "enable_bn = true" >> config.toml && \
+#    echo "bn_momentum = 0.99" >> config.toml
+
+#VOLUME /mnt
+ENTRYPOINT ["python", "mortal.py"]
