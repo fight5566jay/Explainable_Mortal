@@ -1,0 +1,14 @@
+# Build container
+podman build -f Dockerfile.explainable-mortal -t explainable-mortal .
+
+# Basic usage (shows help)
+podman run --rm mortal-simple
+
+# Run training_grp
+cd mortal
+podman run --rm \
+   -v .:/workspace/mortal \
+   -w /workspace/mortal \
+   --entrypoint python \
+   localhost/explainable-mortal \
+   train.py
