@@ -12,3 +12,13 @@ podman run --rm \
    --entrypoint python \
    localhost/explainable-mortal \
    train.py
+
+# Tensorboard
+cd mortal
+podman run --rm -it \
+   -p 6006:6006 \
+   -v .:/workspace/mortal \
+   -w /workspace/mortal \
+   --entrypoint tensorboard \
+   localhost/explainable-mortal \
+   --logdir=/workspace/mortal/built/tensorboard --host=0.0.0.0
