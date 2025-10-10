@@ -8,7 +8,9 @@ __pycache__
 *.so
 *.pth
 *.json.gz
-/mortal/built/tensorboard/
+/mortal/built/tensorboard*/
+view-logs/generated_htmls/*.html
+view-logs/generated_htmls/files*/
 
 .ipynb_checkpoints
 *.ipynb

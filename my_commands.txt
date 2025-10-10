@@ -7,6 +7,15 @@ podman run --rm mortal-simple
 # Run training_grp
 cd mortal
 podman run --rm \
+  -v .:/workspace/mortal \
+  -w /workspace/mortal \
+  --entrypoint python \
+  localhost/explainable-mortal \
+  train_grp.py
+
+# Run training (main model)
+cd mortal
+podman run --rm \
    -v .:/workspace/mortal \
    -w /workspace/mortal \
    --entrypoint python \
@@ -22,3 +31,8 @@ podman run --rm -it \
    --entrypoint tensorboard \
    localhost/explainable-mortal \
    --logdir=/workspace/mortal/built/tensorboard --host=0.0.0.0
+
+# view log
+cd view-logs
+./gen_html.sh <log_name.json.gz in test_play/>
+# Then, copy to your own computer and open the html.
