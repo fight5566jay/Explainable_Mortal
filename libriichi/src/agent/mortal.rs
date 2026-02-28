@@ -1,6 +1,6 @@
 use super::{BatchAgent, InvisibleState};
 use crate::consts::ACTION_SPACE;
-use crate::mjai::{Event, EventExt, Metadata};
+use crate::mjai::{Concepts, Event, EventExt, Metadata};
 use crate::state::PlayerState;
 use crate::{must_tile, tu8};
 use std::mem;
@@ -36,6 +36,8 @@ pub struct MortalBatchAgent {
 
     wg: WaitGroup,
     sync_fields: Arc<Mutex<SyncFields>>,
+
+    is_gen_concepts: bool,
 }
 
 struct SyncFields {
@@ -50,28 +52,36 @@ impl MortalBatchAgent {
     pub fn new(engine: PyObject, player_ids: &[u8]) -> Result<Self> {
         ensure!(player_ids.iter().all(|&id| matches!(id, 0..=3)));
 
-        let (name, is_oracle, version, enable_quick_eval, enable_rule_based_agari_guard) =
-            Python::with_gil(|py| {
-                let obj = engine.bind_borrowed(py);
-                ensure!(
-                    obj.getattr("react_batch")?.is_callable(),
-                    "missing method react_batch",
-                );
+        let (
+            name,
+            is_oracle,
+            version,
+            enable_quick_eval,
+            enable_rule_based_agari_guard,
+            is_gen_concepts,
+        ) = Python::with_gil(|py| {
+            let obj = engine.bind_borrowed(py);
+            ensure!(
+                obj.getattr("react_batch")?.is_callable(),
+                "missing method react_batch",
+            );
 
-                let name = obj.getattr("name")?.extract()?;
-                let is_oracle = obj.getattr("is_oracle")?.extract()?;
-                let version = obj.getattr("version")?.extract()?;
-                let enable_quick_eval = obj.getattr("enable_quick_eval")?.extract()?;
-                let enable_rule_based_agari_guard =
-                    obj.getattr("enable_rule_based_agari_guard")?.extract()?;
-                Ok((
-                    name,
-                    is_oracle,
-                    version,
-                    enable_quick_eval,
-                    enable_rule_based_agari_guard,
-                ))
-            })?;
+            let name = obj.getattr("name")?.extract()?;
+            let is_oracle = obj.getattr("is_oracle")?.extract()?;
+            let version = obj.getattr("version")?.extract()?;
+            let enable_quick_eval = obj.getattr("enable_quick_eval")?.extract()?;
+            let enable_rule_based_agari_guard =
+                obj.getattr("enable_rule_based_agari_guard")?.extract()?;
+            let is_gen_concepts = obj.getattr("is_gen_concepts")?.extract()?;
+            Ok((
+                name,
+                is_oracle,
+                version,
+                enable_quick_eval,
+                enable_rule_based_agari_guard,
+                is_gen_concepts,
+            ))
+        })?;
 
         let size = player_ids.len();
         let quick_eval_reactions = if enable_quick_eval {
@@ -108,6 +118,8 @@ impl MortalBatchAgent {
 
             wg: WaitGroup::new(),
             sync_fields,
+
+            is_gen_concepts,
         })
     }
 
@@ -175,12 +187,19 @@ impl MortalBatchAgent {
             })
             .collect();
 
+        let concepts = if self.is_gen_concepts {
+            Concepts::from_player_state(state)
+        } else {
+            Concepts::default()
+        };
+
         Metadata {
             q_values: Some(q_values_compact),
             mask_bits: Some(mask_bits),
             is_greedy: Some(is_greedy),
             shanten: Some(state.shanten()),
             at_furiten: Some(state.at_furiten()),
+            concepts: Some(concepts),
             ..Default::default()
         }
     }

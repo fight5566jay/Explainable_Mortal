@@ -29,6 +29,7 @@ class TestPlayer:
             stable_mortal.compile()
             stable_dqn.compile()
 
+        self.is_gen_concepts = config['concepts']['is_gen_concepts']
         self.baseline_engine = MortalEngine(
             stable_mortal,
             stable_dqn,
@@ -37,6 +38,7 @@ class TestPlayer:
             device = device,
             enable_amp = True,
             enable_rule_based_agari_guard = True,
+            is_gen_concepts = self.is_gen_concepts,
             name = 'baseline',
         )
         self.chal_version = config['control']['version']
@@ -51,6 +53,7 @@ class TestPlayer:
             version = self.chal_version,
             device = device,
             enable_amp = True,
+            is_gen_concepts = self.is_gen_concepts,
             name = 'mortal',
         )
 
@@ -90,6 +93,7 @@ class TrainPlayer:
             stable_mortal.compile()
             stable_dqn.compile()
 
+        self.is_gen_concepts = config['concepts']['is_gen_concepts']
         self.baseline_engine = MortalEngine(
             stable_mortal,
             stable_dqn,
@@ -98,6 +102,7 @@ class TrainPlayer:
             device = device,
             enable_amp = True,
             enable_rule_based_agari_guard = True,
+            is_gen_concepts = self.is_gen_concepts,
             name = 'baseline',
         )
 
@@ -129,6 +134,7 @@ class TrainPlayer:
             top_p = self.top_p,
             device = device,
             enable_amp = True,
+            is_gen_concepts = self.is_gen_concepts,
             name = 'trainee',
         )
 

@@ -21,6 +21,7 @@ class MortalEngine:
         boltzmann_epsilon = 0,
         boltzmann_temp = 1,
         top_p = 1,
+        is_gen_concepts = False,
     ):
         self.engine_type = 'mortal'
         self.device = device or torch.device('cpu')
@@ -34,6 +35,7 @@ class MortalEngine:
         self.enable_amp = enable_amp
         self.enable_quick_eval = enable_quick_eval
         self.enable_rule_based_agari_guard = enable_rule_based_agari_guard
+        self.is_gen_concepts = is_gen_concepts
         self.name = name
 
         self.boltzmann_epsilon = boltzmann_epsilon
@@ -65,7 +67,7 @@ class MortalEngine:
                 else:
                     latent = mu
                 q_out = self.dqn(latent, masks)
-            case 2 | 3 | 4:
+            case 2 | 3 | 4 | 40 | 49:
                 phi = self.brain(obs)
                 q_out = self.dqn(phi, masks)
 

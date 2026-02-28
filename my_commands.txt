@@ -2,7 +2,47 @@
 podman build -f Dockerfile.explainable-mortal -t explainable-mortal .
 
 # Basic usage (shows help)
-podman run --rm mortal-simple
+podman run --rm localhost/explainable-mortal
+
+# Run training (offline)
+cd mortal
+podman run --rm \
+   -v .:/workspace/mortal \
+   -w /workspace/mortal \
+   --network=host \
+   --entrypoint python \
+   localhost/explainable-mortal \
+   train.py
+
+# Run training (online)
+# Run server
+cd mortal
+podman run --rm \
+   -v .:/workspace/mortal \
+   -w /workspace/mortal \
+   --entrypoint python \
+   localhost/explainable-mortal \
+   server.py
+
+# Run trainer
+cd mortal
+podman run --rm \
+   -v .:/workspace/mortal \
+   -w /workspace/mortal \
+   --network=host \
+   --entrypoint python \
+   localhost/explainable-mortal \
+   train.py
+
+# Run client
+cd mortal
+podman run --rm \
+   -v .:/workspace/mortal \
+   -w /workspace/mortal \
+   --network=host \
+   --entrypoint python \
+   localhost/explainable-mortal \
+   client.py
 
 # Run training_grp
 cd mortal
@@ -13,15 +53,6 @@ podman run --rm \
   localhost/explainable-mortal \
   train_grp.py
 
-# Run training (main model)
-cd mortal
-podman run --rm \
-   -v .:/workspace/mortal \
-   -w /workspace/mortal \
-   --entrypoint python \
-   localhost/explainable-mortal \
-   train.py
-
 # Tensorboard
 cd mortal
 podman run --rm -it \
@@ -30,9 +61,28 @@ podman run --rm -it \
    -w /workspace/mortal \
    --entrypoint tensorboard \
    localhost/explainable-mortal \
-   --logdir=/workspace/mortal/built/tensorboard --host=0.0.0.0
+   --logdir=/workspace/mortal/built/tensorboard \
+   --host=0.0.0.0
 
-# view log
+# Generate a random model
+cd mortal
+podman run --rm \
+   -v .:/workspace/mortal \
+   -w /workspace/mortal \
+   --network=host \
+   --entrypoint python \
+   localhost/explainable-mortal \
+   generate_random_model.py
+
+# View log
 cd view-logs
 ./gen_html.sh <log_name.json.gz in test_play/>
 # Then, copy to your own computer and open the html.
+
+# Copy dataset from mjai-reviewer-copy/converted_logs_compressed/ to ../mortal/built/dataset/YYYY/MM/
+cd scripts
+./copy_dataset.sh [--dry-run] [--verbose] [-y YEAR] [-m MONTH]
+# Examples:
+# ./copy_dataset.sh --dry-run                    # Preview all files
+# ./copy_dataset.sh -y 2024                      # Copy only 2024 files
+# ./copy_dataset.sh -y 2024 -m 01                # Copy only January 2024 files

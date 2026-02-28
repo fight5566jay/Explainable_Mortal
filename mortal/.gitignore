@@ -1,1 +1,4 @@
 /config.toml
+/config_offline.toml
+/config_online.toml
+/packaged_models/

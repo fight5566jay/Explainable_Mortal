@@ -369,6 +369,14 @@ def train():
                     writer.add_scalar('test_play/fuuro_point', stat.avg_fuuro_point, steps)
                     writer.flush()
 
+                    # save state per testing
+                    
+                    state_dir = path.dirname(state_file)
+                    state_filename = path.basename(state_file)
+                    test_state_file = path.join(state_dir, f'test{steps // test_every}_{state_filename}')
+                    shutil.copy(state_file, test_state_file)
+
+                    # save best state
                     if better:
                         torch.save(state, state_file)
                         logging.info(

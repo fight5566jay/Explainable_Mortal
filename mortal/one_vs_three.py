@@ -36,6 +36,7 @@ def main():
         if cfg['champion']['enable_compile']:
             mortal.compile()
             dqn.compile()
+        is_gen_concepts = config['concepts']['is_gen_concepts']
         engine_cham = MortalEngine(
             mortal,
             dqn,
@@ -44,6 +45,7 @@ def main():
             device = torch.device(cfg['champion']['device']),
             enable_amp = cfg['champion']['enable_amp'],
             enable_rule_based_agari_guard = cfg['champion']['enable_rule_based_agari_guard'],
+            is_gen_concepts = is_gen_concepts,
             name = cfg['champion']['name'],
         )
 
@@ -59,6 +61,7 @@ def main():
     if cfg['challenger']['enable_compile']:
         mortal.compile()
         dqn.compile()
+    is_gen_concepts = config['concepts']['is_gen_concepts']
     engine_chal = MortalEngine(
         mortal,
         dqn,
@@ -67,6 +70,7 @@ def main():
         device = torch.device(cfg['challenger']['device']),
         enable_amp = cfg['challenger']['enable_amp'],
         enable_rule_based_agari_guard = cfg['challenger']['enable_rule_based_agari_guard'],
+        is_gen_concepts = is_gen_concepts,
         name = cfg['challenger']['name'],
     )
 

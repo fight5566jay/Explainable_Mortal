@@ -5,19 +5,41 @@ use serde::Serialize;
 use tinyvec::ArrayVec;
 
 #[derive(Debug, Clone, Serialize)]
-pub(super) struct KawaItem {
+pub struct KawaItem {
     pub(super) chi_pon: Option<ChiPon>,
     pub(super) kan: ArrayVec<[Tile; 4]>,
     pub(super) sutehai: Sutehai,
 }
 
+impl KawaItem {
+    #[inline]
+    #[must_use]
+    pub const fn sutehai(&self) -> &Sutehai {
+        &self.sutehai
+    }
+}
+
 #[derive(Debug, Clone, Copy, Serialize)]
-pub(super) struct Sutehai {
+pub struct Sutehai {
     pub(super) tile: Tile,
     // only for normal dora, aka is not included
     pub(super) is_dora: bool,
     pub(super) is_tedashi: bool,
     pub(super) is_riichi: bool,
+}
+
+impl Sutehai {
+    #[inline]
+    #[must_use]
+    pub const fn tile(self) -> Tile {
+        self.tile
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_riichi(self) -> bool {
+        self.is_riichi
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]

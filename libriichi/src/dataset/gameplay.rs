@@ -1,6 +1,6 @@
 use super::{Grp, Invisible};
 use crate::chi_type::ChiType;
-use crate::mjai::Event;
+use crate::mjai::{Concepts, Event};
 use crate::state::PlayerState;
 use std::array;
 use std::fs::File;
@@ -56,6 +56,7 @@ pub struct Gameplay {
     pub apply_gamma: Vec<bool>,
     pub at_turns: Vec<u8>,
     pub shantens: Vec<i8>,
+    pub concepts: Vec<Concepts>,
 
     // per game
     pub grp: Grp, // actually per kyoku though
@@ -225,6 +226,10 @@ impl Gameplay {
     }
     fn take_shantens(&mut self) -> Vec<i8> {
         mem::take(&mut self.shantens)
+    }
+
+    fn take_concepts_list(&mut self) -> Vec<Concepts> {
+        mem::take(&mut self.concepts)
     }
 
     fn take_grp(&mut self) -> Grp {
@@ -429,6 +434,7 @@ impl Gameplay {
         self.apply_gamma.push(label <= 37);
         self.at_turns.push(ctx.state.at_turn());
         self.shantens.push(ctx.state.shanten());
+        self.concepts.push(Concepts::from_player_state(&ctx.state));
 
         if let Some(invisibles) = ctx.invisibles {
             let invisible_obs = invisibles[ctx.kyoku_idx].encode(

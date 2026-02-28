@@ -1,7 +1,7 @@
 use super::{ActionCandidate, PlayerState};
 use crate::tile::Tile;
-
 use pyo3::prelude::*;
+use tinyvec::ArrayVec;
 
 #[pymethods]
 impl PlayerState {
@@ -34,6 +34,20 @@ impl PlayerState {
     #[must_use]
     pub const fn is_oya(&self) -> bool {
         self.oya == 0
+    }
+
+    #[getter]
+    #[inline]
+    #[must_use]
+    pub const fn bakaze(&self) -> u8 {
+        self.bakaze.as_u8()
+    }
+
+    #[getter]
+    #[inline]
+    #[must_use]
+    pub const fn jikaze(&self) -> u8 {
+        self.jikaze.as_u8()
     }
 
     #[getter]
@@ -176,5 +190,88 @@ impl PlayerState {
     #[must_use]
     pub fn kakan_candidates(&self) -> &[Tile] {
         &self.kakan_candidates
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_menzen(&self) -> bool {
+        self.is_menzen
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn doras_owned(&self) -> [u8; 4] {
+        self.doras_owned
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn riichi_declared(&self) -> [bool; 4] {
+        self.riichi_declared
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn riichi_accepted(&self) -> [bool; 4] {
+        self.riichi_accepted
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn riichi_sutehai_tiles(&self) -> [Option<Tile>; 4] {
+        [
+            self.riichi_sutehais[0].map(|s| s.tile),
+            self.riichi_sutehais[1].map(|s| s.tile),
+            self.riichi_sutehais[2].map(|s| s.tile),
+            self.riichi_sutehais[3].map(|s| s.tile),
+        ]
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn kawa_overview(&self) -> [ArrayVec<[Tile; 24]>; 4] {
+        self.kawa_overview
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn kawa(&self) -> &[tinyvec::TinyVec<[Option<super::item::KawaItem>; 24]>; 4] {
+        &self.kawa
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn tiles_seen(&self) -> [u8; 34] {
+        self.tiles_seen
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn fuuro_overview(&self) -> [ArrayVec<[ArrayVec<[Tile; 4]>; 4]>; 4] {
+        self.fuuro_overview
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn scores(&self) -> [i32; 4] {
+        self.scores
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn next_shanten_discard(&self) -> [bool; 34] {
+        self.next_shanten_discards
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn has_next_shanten_discard(&self) -> bool {
+        self.has_next_shanten_discard
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn tehai_len_div3(&self) -> u8 {
+        self.tehai_len_div3
     }
 }

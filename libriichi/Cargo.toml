@@ -19,6 +19,7 @@ rayon = "1"
 ndarray = "0.16"
 numpy = "0.25"
 serde_with = "3"
+serde-big-array = "0.5.1"
 rand = "0.9"
 rand_chacha = "0.9"
 flate2 = "1"
@@ -28,7 +29,11 @@ derivative = "2"
 ahash = "0.8"
 parking_lot = "0.12"
 crossbeam = "0.8"
-pyo3 = { version = "0.25", features = ["auto-initialize", "multiple-pymethods", "anyhow"] }
+pyo3 = { version = "0.25", features = [
+    "auto-initialize",
+    "multiple-pymethods",
+    "anyhow",
+] }
 indicatif = { version = "0.17", features = ["rayon"] }
 tinyvec = { version = "1", features = ["alloc", "serde", "rustc_1_57"] }
 serde = { version = "1", features = ["derive"] }

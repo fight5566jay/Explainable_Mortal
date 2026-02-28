@@ -33,7 +33,7 @@ def drain():
         with socket.socket() as conn:
             conn.connect(remote)
             send_msg(conn, {'type': 'drain'})
-            msg = recv_msg(conn)
+            msg = recv_msg(conn, weights_only=False)
         if msg['count'] == 0:
             time.sleep(5)
             continue
@@ -60,11 +60,11 @@ def send_msg(conn: socket.socket, msg, packed=False):
     conn.sendall(struct.pack('<Q', len(tx)))
     conn.sendall(tx)
 
-def recv_msg(conn: socket.socket, map_location='cpu'):
+def recv_msg(conn: socket.socket, map_location='cpu', weights_only=True):
     rx = recv_binary(conn, 8)
     (size,) = struct.unpack('<Q', rx)
     rx = recv_binary(conn, size)
-    return torch.load(BytesIO(rx), weights_only=True, map_location=map_location)
+    return torch.load(BytesIO(rx), weights_only=weights_only, map_location=map_location)
 
 def recv_binary(conn: socket.socket, size):
     assert size > 0

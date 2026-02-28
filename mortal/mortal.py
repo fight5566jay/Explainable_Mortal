@@ -37,6 +37,7 @@ def main():
     else:
         time = datetime.fromtimestamp(state['timestamp'], tz=timezone.utc).strftime('%y%m%d%H')
         tag = f'mortal{version}-b{num_blocks}c{conv_channels}-t{time}'
+    is_gen_concepts = config['concepts']['is_gen_concepts']
 
     mortal = Brain(version=version, num_blocks=num_blocks, conv_channels=conv_channels).eval()
     dqn = DQN(version=version).eval()
@@ -52,6 +53,7 @@ def main():
         enable_amp = False,
         enable_quick_eval = not review_mode,
         enable_rule_based_agari_guard = True,
+        is_gen_concepts = is_gen_concepts,
         name = 'mortal',
     )
     bot = Bot(engine, player_id)

@@ -89,7 +89,7 @@ impl IntegerEncoder {
                     ctx.idx += intervals - 1;
                 }
             }
-            4 => {
+            4 | 40 | 49 => {
                 debug_assert!(self.one_hot || self.rescale);
 
                 if self.one_hot {
@@ -155,7 +155,7 @@ impl<'a> ObsEncoderContext<'a> {
                 2 | 3 => IntegerEncoder::new(score as usize / 100, 500)
                     .rbf_intervals(10)
                     .encode(&mut self),
-                4 => {
+                4 | 40 | 49 => {
                     let v = score.clamp(0, 30_000) as f32 / 30_000.;
                     self.arr.fill(self.idx, v);
                     self.idx += 1;
@@ -164,32 +164,34 @@ impl<'a> ObsEncoderContext<'a> {
             }
         }
 
-        let n = state.rank as usize;
-        self.arr.fill(self.idx + n, 1.);
-        self.idx += 4;
+        if self.version != 40 && self.version != 49 {
+            let n = state.rank as usize;
+            self.arr.fill(self.idx + n, 1.);
+            self.idx += 4;
+        }
 
         let n = state.kyoku as usize;
         match self.version {
             // for v1, this was a mistake, it actually only uses 3 channels.
             1 => self.arr.fill_rows(self.idx, n, 1.),
-            2 | 3 | 4 => self.arr.fill(self.idx + n, 1.),
+            2 | 3 | 4 | 40 | 49 => self.arr.fill(self.idx + n, 1.),
             _ => unreachable!(),
         }
         self.idx += 4;
 
         let cap = match self.version {
-            1 | 4 => 10,
+            1 | 4 | 40 | 49 => 10,
             2 | 3 => 6,
             _ => unreachable!(),
         };
         let n = state.honba as usize;
         IntegerEncoder::new(n, cap)
-            .rescale(self.version == 4)
+            .rescale(matches!(self.version, 4 | 40 | 49))
             .rbf_intervals(3)
             .encode(&mut self);
         let n = state.kyotaku as usize;
         IntegerEncoder::new(n, cap)
-            .rescale(self.version == 4)
+            .rescale(matches!(self.version, 4 | 40 | 49))
             .rbf_intervals(3)
             .encode(&mut self);
 
@@ -197,7 +199,7 @@ impl<'a> ObsEncoderContext<'a> {
         self.arr.assign(self.idx + 1, state.jikaze.as_usize(), 1.);
         self.idx += 2;
 
-        if matches!(self.version, 2 | 3 | 4) {
+        if matches!(self.version, 2 | 3 | 4 | 40 | 49) {
             let n = (state.bakaze.as_u8() - tu8!(E)).min(1) * 4 + state.kyoku;
             IntegerEncoder::new(n as usize, 7)
                 .rescale(true)
@@ -220,7 +222,7 @@ impl<'a> ObsEncoderContext<'a> {
         self.idx += (18 - state.kawa[0].len().min(18)) * SELF_KAWA_ITEM_CHANNELS;
 
         let max_kawa_len = state.kawa.iter().map(|k| k.len()).max().unwrap();
-        if matches!(self.version, 3 | 4) {
+        if matches!(self.version, 3 | 4 | 40 | 49) {
             for (turn, kawa_item) in state.kawa[0].iter().enumerate() {
                 if let Some(kawa_item) = kawa_item {
                     let sutehai = kawa_item.sutehai;
@@ -258,7 +260,7 @@ impl<'a> ObsEncoderContext<'a> {
                     }
                     self.idx += 6;
                 }
-                3 | 4 => {
+                3 | 4 | 40 | 49 => {
                     for (turn, kawa_item) in player_kawa.iter().enumerate() {
                         if let Some(kawa_item) = kawa_item {
                             let sutehai = kawa_item.sutehai;
@@ -279,25 +281,32 @@ impl<'a> ObsEncoderContext<'a> {
             }
         }
 
-        let v = state.tiles_left as f32 / 69.;
-        self.arr.fill(self.idx, v);
-        self.idx += 1;
+        //
+        if self.version != 49 {
+            let v = state.tiles_left as f32 / 69.;
+            self.arr.fill(self.idx, v);
+            self.idx += 1;
+        }
 
-        for count in state.doras_owned {
-            IntegerEncoder::new(count as usize, 12)
+        if self.version != 40 && self.version != 49 {
+            for count in state.doras_owned {
+                IntegerEncoder::new(count as usize, 12)
+                    .rescale(true)
+                    .rbf_intervals(3)
+                    .encode(&mut self);
+            }
+
+            let doras_unseen = state.dora_indicators.len() as u8 * 4 + 3 - state.doras_seen;
+            IntegerEncoder::new(doras_unseen as usize, 5 * 4 + 3)
                 .rescale(true)
-                .rbf_intervals(3)
+                .rbf_intervals(4)
                 .encode(&mut self);
         }
 
-        let doras_unseen = state.dora_indicators.len() as u8 * 4 + 3 - state.doras_seen;
-        IntegerEncoder::new(doras_unseen as usize, 5 * 4 + 3)
-            .rescale(true)
-            .rbf_intervals(4)
-            .encode(&mut self);
-
-        for player_kawa_overview in &state.kawa_overview {
-            self.encode_tile_set(player_kawa_overview.iter().copied());
+        if self.version != 49 {
+            for player_kawa_overview in &state.kawa_overview {
+                self.encode_tile_set(player_kawa_overview.iter().copied());
+            }
         }
 
         for player_fuuro in &state.fuuro_overview {
@@ -328,11 +337,13 @@ impl<'a> ObsEncoderContext<'a> {
             self.idx += 1;
         }
 
-        if matches!(self.version, 2 | 3 | 4) {
-            for (tid, count) in state.tiles_seen.iter().copied().enumerate() {
-                self.arr.assign(self.idx, tid, count as f32 / 4.);
+        if matches!(self.version, 2 | 3 | 4 | 40 | 49) {
+            if self.version != 49 {
+                for (tid, count) in state.tiles_seen.iter().copied().enumerate() {
+                    self.arr.assign(self.idx, tid, count as f32 / 4.);
+                }
+                self.idx += 1;
             }
-            self.idx += 1;
 
             for &player_last_tedashi in &state.last_tedashis[1..] {
                 if let Some(sutehai) = player_last_tedashi {
@@ -379,21 +390,28 @@ impl<'a> ObsEncoderContext<'a> {
             .for_each(|(i, _)| self.arr.fill(self.idx + i, 1.));
         self.idx += 3;
 
-        state
-            .waits
-            .iter()
-            .enumerate()
-            .filter(|&(_, &c)| c)
-            .for_each(|(t, _)| self.arr.assign(self.idx, t, 1.));
-        self.idx += 1;
+        //
+        if self.version != 49 {
+            state
+                .waits
+                .iter()
+                .enumerate()
+                .filter(|&(_, &c)| c)
+                .for_each(|(t, _)| self.arr.assign(self.idx, t, 1.));
+            self.idx += 1;
 
-        if state.at_furiten {
-            self.arr.fill(self.idx, 1.);
+            //
+            if state.at_furiten {
+                self.arr.fill(self.idx, 1.);
+            }
+            self.idx += 1;
         }
-        self.idx += 1;
+        
 
-        let n = state.shanten as usize;
-        IntegerEncoder::new(n, 6).one_hot(true).encode(&mut self);
+        if self.version != 40 && self.version != 49 {
+            let n = state.shanten as usize;
+            IntegerEncoder::new(n, 6).one_hot(true).encode(&mut self);
+        }
 
         if state.riichi_accepted[0] {
             self.arr.fill(self.idx, 1.);
@@ -411,22 +429,27 @@ impl<'a> ObsEncoderContext<'a> {
                 .expect("building chi/pon/daiminkan/ron feature without any kawa tile");
             let tile_id = tile.deaka().as_usize();
 
-            self.arr.assign(self.idx, tile_id, 1.);
-            if tile.is_aka() {
-                self.arr.fill(self.idx + 1, 1.);
-            }
-            if state.dora_factor[tile.deaka().as_usize()] > 0 {
-                self.arr.fill(self.idx + 2, 1.);
+            if self.version != 40 && self.version != 49 {
+                self.arr.assign(self.idx, tile_id, 1.);
+                if tile.is_aka() {
+                    self.arr.fill(self.idx + 1, 1.);
+                }
+                if state.dora_factor[tile.deaka().as_usize()] > 0 {
+                    self.arr.fill(self.idx + 2, 1.);
+                }
             }
 
-            // pass
+            // pass mask logic for all versions
             if !self.at_kan_select {
                 self.mask[ACTION_SPACE - 1] = true;
             } else if cans.can_daiminkan {
                 self.mask[tile_id] = true;
             }
         }
-        self.idx += 3;
+
+        if self.version != 40 && self.version != 49 {
+            self.idx += 3;
+        }
 
         if cans.can_discard {
             state
@@ -447,33 +470,41 @@ impl<'a> ObsEncoderContext<'a> {
                     }
                 });
 
-            state
-                .keep_shanten_discards
-                .iter()
-                .enumerate()
-                .filter(|&(_, &c)| c)
-                .for_each(|(t, _)| self.arr.assign(self.idx + 1, t, 1.));
-            state
-                .next_shanten_discards
-                .iter()
-                .enumerate()
-                .filter(|&(_, &c)| c)
-                .for_each(|(t, _)| self.arr.assign(self.idx + 2, t, 1.));
-
-            if state.shanten <= 1 {
+            if self.version != 49 {
+                //
                 state
-                    .discard_candidates_with_unconditional_tenpai()
+                    .keep_shanten_discards
                     .iter()
                     .enumerate()
                     .filter(|&(_, &c)| c)
-                    .for_each(|(t, _)| self.arr.assign(self.idx + 3, t, 1.));
+                    .for_each(|(t, _)| self.arr.assign(self.idx + 1, t, 1.));
+                //
+                state
+                    .next_shanten_discards
+                    .iter()
+                    .enumerate()
+                    .filter(|&(_, &c)| c)
+                    .for_each(|(t, _)| self.arr.assign(self.idx + 2, t, 1.));
+                //
+                if state.shanten <= 1 {
+                    state
+                        .discard_candidates_with_unconditional_tenpai()
+                        .iter()
+                        .enumerate()
+                        .filter(|&(_, &c)| c)
+                        .for_each(|(t, _)| self.arr.assign(self.idx + 3, t, 1.));
+                }
+                if state.riichi_declared[0] {
+                    self.arr.fill(self.idx + 4, 1.);
+                }
             }
-
-            if state.riichi_declared[0] {
-                self.arr.fill(self.idx + 4, 1.);
+            else{
+                if state.riichi_declared[0] {
+                    self.arr.fill(self.idx + 1, 1.);
+                }
             }
         }
-        self.idx += 5;
+        self.idx += if self.version != 49 { 5 } else { 2 };
 
         if cans.can_riichi {
             self.arr.fill(self.idx, 1.);
@@ -545,13 +576,17 @@ impl<'a> ObsEncoderContext<'a> {
         }
         self.idx += 1;
 
-        if cans.can_agari() {
-            self.arr.fill(self.idx, 1.);
-            if !self.at_kan_select {
-                self.mask[43] = true;
+        if self.version != 49{
+            if cans.can_agari() {
+                self.arr.fill(self.idx, 1.);
+                if !self.at_kan_select {
+                    self.mask[43] = true;
+                }
             }
+            self.idx += 1;
+        }else{
+            self.mask[43] = cans.can_agari() && !self.at_kan_select;
         }
-        self.idx += 1;
 
         if cans.can_ryukyoku {
             self.arr.fill(self.idx, 1.);
@@ -561,7 +596,7 @@ impl<'a> ObsEncoderContext<'a> {
         }
         self.idx += 1;
 
-        if self.version == 4 {
+        if matches!(self.version, 4 | 40) {
             if let Ok(SinglePlayerTables { max_ev_table }) = state.single_player_tables() {
                 // Get the max EV from the table that maximizes EV, which should
                 // be the global max EV.

@@ -121,7 +121,7 @@ class Handler(BaseRequestHandler):
         return send_msg(self.request, msg, packed)
 
     def recv_msg(self):
-        return recv_msg(self.request)
+        return recv_msg(self.request, map_location='cpu', weights_only=False)
 
 class Server(ThreadingTCPServer):
     def handle_error(self, request, client_address):

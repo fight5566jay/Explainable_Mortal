@@ -21,14 +21,14 @@ COPY exe-wrapper exe-wrapper
 RUN cargo build -p libriichi --lib --release
 
 # Copy Python application
-COPY mortal .
+#COPY mortal .
 #COPY docs ./docs
 
 # The libriichi.so should already be built in the current container
 RUN cp target/release/libriichi.so .
 
 # Install Python dependencies that aren't included in pytorch image
-RUN pip install toml tqdm tensorboard
+RUN pip install toml tqdm tensorboard scikit-learn matplotlib
 
 # Create config file
 ENV MORTAL_CFG config.toml

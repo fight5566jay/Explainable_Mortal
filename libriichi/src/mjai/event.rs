@@ -1,3 +1,4 @@
+use super::Concepts;
 use crate::tile::Tile;
 use std::error::Error;
 use std::fmt;
@@ -147,6 +148,8 @@ pub struct Metadata {
     pub shanten: Option<i8>,
     pub at_furiten: Option<bool>,
     pub kan_select: Option<Box<Metadata>>,
+
+    pub concepts: Option<Concepts>,
 }
 
 #[derive(Serialize, Deserialize)]
