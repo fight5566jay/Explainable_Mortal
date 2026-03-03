@@ -5,26 +5,27 @@
 version = 4
 online = false
 
-state_file = '/path/to/mortal.pth'
-best_state_file = '/path/to/best.pth'
-tensorboard_dir = '/path/to/dir'
+state_file = '/workspace/mortal/built/models/mortal.pth'
+best_state_file = '/workspace/mortal/built/models/best.pth'
+tensorboard_dir = '/workspace/mortal/built/tensorboard'
 
 device = 'cuda:0'
 enable_cudnn_benchmark = false
 enable_amp = false
 enable_compile = false
 
-batch_size = 512
+batch_size = 64
 opt_step_every = 1
 
 save_every = 400
 test_every = 20000
 submit_every = 400
 
+
 # using env `TRAIN_PLAY_PROFILE`
 [train_play.default]
 games = 800
-log_dir = '/path/to/train_play'
+log_dir = '/workspace/mortal/built/logs/train_play'
 boltzmann_epsilon = 0.005
 boltzmann_temp = 0.05
 top_p = 1.0
@@ -32,14 +33,14 @@ repeats = 1
 
 [test_play]
 games = 3000
-log_dir = '/path/to/test_play'
+log_dir = '/workspace/mortal/built/logs/test_play'
 
 [dataset]
-globs = ['/path/to/dataset/**/*.json.gz']
-file_index = '/path/to/file_index.pth'
+globs = ['/workspace/mortal/built/dataset/**/*.json.gz']
+file_index = '/workspace/mortal/built/models/file_index.pth'
 file_batch_size = 15
 reserve_ratio = 0.0
-num_workers = 1
+num_workers = 0
 player_names_files = []
 num_epochs = 1
 enable_augmentation = false
@@ -76,14 +77,16 @@ warm_up_steps = 0
 max_steps = 0
 
 [baseline.train]
+
+
 device = 'cuda:0'
 enable_compile = false
-state_file = '/path/to/baseline.pth'
+state_file = '/workspace/mortal/built/models/mortal.pth'
 
 [baseline.test]
 device = 'cuda:0'
 enable_compile = false
-state_file = '/path/to/baseline.pth'
+state_file = '/workspace/mortal/built/models/best.pth'
 
 [online]
 history_window = 50
@@ -94,8 +97,8 @@ host = '127.0.0.1'
 port = 5000
 
 [online.server]
-buffer_dir = '/path/to/buffer'
-drain_dir = '/path/to/drain'
+buffer_dir = '/workspace/mortal/built/online_server/buffer'
+drain_dir = '/workspace/mortal/built/online_server/drain'
 sample_reuse_rate = 0
 sample_reuse_threshold = 0
 capacity = 1600
@@ -103,14 +106,14 @@ force_sequential = false
 
 [1v3]
 seed_key = -1
-games_per_iter = 2000
-iters = 500
-log_dir = '/path/to/1v3'
+games_per_iter = 4
+iters = 1
+log_dir = '/workspace/mortal/built/1v3'
 
 [1v3.challenger]
 device = 'cuda:0'
 name = 'mortal'
-state_file = '/path/to/challenger.pth'
+state_file = '/workspace/mortal/built/models/mortal.pth'
 stochastic_latent = false
 enable_compile = false
 enable_amp = true
@@ -119,7 +122,7 @@ enable_rule_based_agari_guard = true
 [1v3.champion]
 device = 'cuda:0'
 name = 'baseline'
-state_file = '/path/to/baseline.pth'
+state_file = '/workspace/mortal/built/models/best.pth'
 stochastic_latent = false
 enable_compile = false
 enable_amp = true
@@ -127,11 +130,11 @@ enable_rule_based_agari_guard = true
 
 [1v3.akochan]
 enabled = false
-dir = '/path/to/akochan'
-tactics = '/path/to/tactics.json'
+dir = '/workspace/mortal/built/models/akochan'
+tactics = '/workspace/mortal/built/tactics.json'
 
 [grp]
-state_file = '/path/to/grp.pth'
+state_file = '/workspace/mortal/built/models/grp.pth'
 
 [grp.network]
 hidden_size = 64
@@ -140,7 +143,7 @@ num_layers = 2
 [grp.control]
 device = 'cuda:0'
 enable_cudnn_benchmark = false
-tensorboard_dir = 'grp_v2/log'
+tensorboard_dir = '/workspace/mortal/built/tensorboard/grp_v2/log'
 
 batch_size = 512
 save_every = 2000
@@ -148,19 +151,33 @@ val_steps = 400
 
 [grp.dataset]
 train_globs = [
-    '/path/to/dataset/2019/**/*.json.gz',
-    '/path/to/dataset/2020/**/*.json.gz',
-    '/path/to/dataset/2021/01/**/*.json.gz',
-    '/path/to/dataset/2021/02/**/*.json.gz',
+    '/workspace/mortal/built/dataset/2024/01/**/*.json.gz',
+    '/workspace/mortal/built/dataset/2024/02/**/*.json.gz',
+    '/workspace/mortal/built/dataset/2024/03/**/*.json.gz',
+    '/workspace/mortal/built/dataset/2024/04/**/*.json.gz',
+    '/workspace/mortal/built/dataset/2024/05/**/*.json.gz',
+    '/workspace/mortal/built/dataset/2024/07/**/*.json.gz',
+    '/workspace/mortal/built/dataset/2024/08/**/*.json.gz',
+    '/workspace/mortal/built/dataset/2024/09/**/*.json.gz',
+    '/workspace/mortal/built/dataset/2024/10/**/*.json.gz',
+    '/workspace/mortal/built/dataset/2024/11/**/*.json.gz',
     # ...
 ]
 val_globs = [
-    '/path/to/dataset/2021/10/**/*.json.gz',
-    '/path/to/dataset/2021/11/**/*.json.gz',
+    '/workspace/mortal/built/dataset/2024/06/**/*.json.gz',
+    '/workspace/mortal/built/dataset/2024/12/**/*.json.gz',
     # ...
 ]
-file_index = '/path/to/grp_file_index.pth'
+file_index = '/workspace/mortal/built/models/grp_file_index.pth'
 file_batch_size = 50
 
 [grp.optim]
 lr = 1e-5
+
+[concepts]
+is_gen_concepts = true
+regression_models_dir = './built/concept_analysis/regression_models'
+plots_dir = './built/concept_analysis/plots'
+analysis_file = './built/concept_analysis/analysis_scores.json'
+file_batch_size = 2000
+max_files = 20
